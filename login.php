@@ -15,8 +15,12 @@ if (!empty($_SESSION['admin_logged_in'])) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        ensureDatabase();
-        $conn = connectDb();
+        $dbOk = ensureDatabase();
+        if ($dbOk !== true) {
+            error_log('Login error: ensureDatabase() returned false - DB unavailable');
+            $loginError = 'قاعدة البيانات غير متوفرة حالياً، حاول لاحقاً.';
+        } else {
+            $conn = connectDb();
         $stmt = $conn->prepare('SELECT id, password FROM users WHERE username = ?');
         $stmt->bind_param('s', $username);
         $username = trim($_POST['username'] ?? '');
@@ -30,17 +34,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $conn->close();
         }
 
-        if ($user && password_verify(trim($_POST['password'] ?? ''), $user['password'])) {
+            if ($user && password_verify(trim($_POST['password'] ?? ''), $user['password'])) {
             $_SESSION['admin_logged_in'] = true;
             $_SESSION['admin_username'] = $username;
             header('Location: index.php');
             exit;
         }
-
-        $loginError = 'اسم المستخدم أو كلمة المرور غير صحيحة.';
+            $loginError = 'اسم المستخدم أو كلمة المرور غير صحيحة.';
+        }
     } catch (Throwable $e) {
         // سجل الخطأ في لوج السيرفر ليمكننا الاطلاع عليه في Railway
         error_log('Login error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+        // اكتب نسخة مفصلة أيضاً إلى ملف debug محلي لمساعدة التشخيص
+        @error_log("[" . date('c') . "] Login error: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine() . "\n" . $e->getTraceAsString() . "\n", 3, __DIR__ . '/debug.log');
         $loginError = 'حدث خطأ داخلي، الرجاء المحاولة لاحقاً.';
     }
 }
