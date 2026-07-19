@@ -14,25 +14,35 @@ if (!empty($_SESSION['admin_logged_in'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    ensureDatabase();
-    $conn = connectDb();
-    $stmt = $conn->prepare('SELECT id, password FROM users WHERE username = ?');
-    $stmt->bind_param('s', $username);
-    $username = trim($_POST['username'] ?? '');
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
-    $stmt->close();
-    $conn->close();
+    try {
+        ensureDatabase();
+        $conn = connectDb();
+        $stmt = $conn->prepare('SELECT id, password FROM users WHERE username = ?');
+        $stmt->bind_param('s', $username);
+        $username = trim($_POST['username'] ?? '');
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $user = $result->fetch_assoc();
+        if (method_exists($stmt, 'close')) {
+            $stmt->close();
+        }
+        if (method_exists($conn, 'close')) {
+            $conn->close();
+        }
 
-    if ($user && password_verify(trim($_POST['password'] ?? ''), $user['password'])) {
-        $_SESSION['admin_logged_in'] = true;
-        $_SESSION['admin_username'] = $username;
-        header('Location: index.php');
-        exit;
+        if ($user && password_verify(trim($_POST['password'] ?? ''), $user['password'])) {
+            $_SESSION['admin_logged_in'] = true;
+            $_SESSION['admin_username'] = $username;
+            header('Location: index.php');
+            exit;
+        }
+
+        $loginError = 'اسم المستخدم أو كلمة المرور غير صحيحة.';
+    } catch (Throwable $e) {
+        // سجل الخطأ في لوج السيرفر ليمكننا الاطلاع عليه في Railway
+        error_log('Login error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+        $loginError = 'حدث خطأ داخلي، الرجاء المحاولة لاحقاً.';
     }
-
-    $loginError = 'اسم المستخدم أو كلمة المرور غير صحيحة.';
 }
 
 require_once __DIR__ . '/includes/header.php';
