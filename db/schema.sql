@@ -1,0 +1,18 @@
+CREATE DATABASE IF NOT EXISTS events_city CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE events_city;
+
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    location VARCHAR(255) NOT NULL,
+    event_date DATE NOT NULL,
+    image VARCHAR(255) NOT NULL DEFAULT 'assets/img/placeholder.svg'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
