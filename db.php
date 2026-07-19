@@ -34,6 +34,8 @@ class PdoResultWrapper
 class PdoStatementWrapper
 {
     private ?PDOStatement $stmt;
+    private array $params = [];
+    private string $paramTypes = '';
 
     public function __construct(?PDOStatement $stmt)
     {
@@ -46,15 +48,17 @@ class PdoStatementWrapper
             return false;
         }
 
+        $this->paramTypes = $types;
         $typeMap = [
             'i' => PDO::PARAM_INT,
             's' => PDO::PARAM_STR,
             'd' => PDO::PARAM_STR,
         ];
 
+        // Store params with their types
         foreach ($params as $index => $param) {
             $pdoType = $typeMap[$types[$index]] ?? PDO::PARAM_STR;
-            $this->stmt->bindParam($index + 1, $param, $pdoType);
+            $this->params[$index + 1] = ['value' => $param, 'type' => $pdoType];
         }
 
         return true;
@@ -62,7 +66,16 @@ class PdoStatementWrapper
 
     public function execute(): bool
     {
-        return $this->stmt !== null && $this->stmt->execute();
+        if ($this->stmt === null) {
+            return false;
+        }
+
+        // Bind all parameters by value before executing
+        foreach ($this->params as $index => $param) {
+            $this->stmt->bindValue($index, $param['value'], $param['type']);
+        }
+
+        return $this->stmt->execute();
     }
 
     public function get_result(): PdoResultWrapper
@@ -342,8 +355,9 @@ function ensureDatabase(): bool
         ];
 
         foreach ($sampleEvents as $event) {
+            $title = $event[0];
             $existing = $conn->prepare('SELECT COUNT(*) FROM events WHERE title = ?');
-            $existing->bind_param('s', $event[0]);
+            $existing->bind_param('s', $title);
             $existing->execute();
             $result = $existing->get_result();
             $row = $result->fetch_assoc();
@@ -351,8 +365,15 @@ function ensureDatabase(): bool
             $existing->close();
 
             if ($exists === 0) {
+                $title = $event[0];
+                $description = $event[1];
+                $category = $event[2];
+                $location = $event[3];
+                $event_date = $event[4];
+                $image = $event[5];
+                
                 $insertEvent = $conn->prepare('INSERT INTO events (title, description, category, location, event_date, image) VALUES (?, ?, ?, ?, ?, ?)');
-                $insertEvent->bind_param('ssssss', $event[0], $event[1], $event[2], $event[3], $event[4], $event[5]);
+                $insertEvent->bind_param('ssssss', $title, $description, $category, $location, $event_date, $image);
                 $insertEvent->execute();
                 $insertEvent->close();
             }
