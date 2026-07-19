@@ -4,6 +4,28 @@ ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
 
+set_error_handler(function (int $errno, string $errstr, string $errfile, int $errline): bool {
+    $message = "PHP Error [$errno] $errstr in $errfile:$errline";
+    error_log($message);
+    echo '<pre style="white-space:pre-wrap;">' . htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . '</pre>';
+    return true;
+});
+
+set_exception_handler(function (Throwable $e): void {
+    $message = "PHP Exception: " . $e->getMessage() . " in " . $e->getFile() . ':' . $e->getLine();
+    error_log($message);
+    echo '<pre style="white-space:pre-wrap;">' . htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . '</pre>';
+});
+
+register_shutdown_function(function (): void {
+    $error = error_get_last();
+    if ($error !== null) {
+        $message = "PHP Shutdown: {$error['message']} in {$error['file']}:{$error['line']}";
+        error_log($message);
+        echo '<pre style="white-space:pre-wrap;">' . htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . '</pre>';
+    }
+});
+
 require_once __DIR__ . '/db.php';
 
 $basePath = '';
