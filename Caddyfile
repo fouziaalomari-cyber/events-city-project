@@ -1,0 +1,9 @@
+:80 {
+	root * /app
+	encode gzip
+	php_fastcgi 127.0.0.1:9000 {
+		env PHP_INI_SCAN_DIR /app
+	}
+	file_server
+	try_files {path} {path}/ /index.php
+}
