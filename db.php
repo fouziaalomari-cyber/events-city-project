@@ -189,21 +189,25 @@ function ensureDatabase(): bool
             image VARCHAR(255) NOT NULL DEFAULT 'assets/img/placeholder.svg'
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-        $stmt = $conn->prepare('SELECT COUNT(*) FROM users WHERE username = ?');
+        $stmt = $conn->prepare('SELECT password FROM users WHERE username = ?');
         $stmt->bind_param('s', $username);
         $username = 'admin';
         $stmt->execute();
         $result = $stmt->get_result();
         $row = $result->fetch_assoc();
-        $count = (int) ($row['COUNT(*)'] ?? 0);
         $stmt->close();
 
-        if ($count === 0) {
-            $hash = password_hash('admin123', PASSWORD_DEFAULT);
+        $hash = password_hash('admin', PASSWORD_DEFAULT);
+        if ($row === null) {
             $insert = $conn->prepare('INSERT INTO users (username, password) VALUES (?, ?)');
             $insert->bind_param('ss', $username, $hash);
             $insert->execute();
             $insert->close();
+        } else {
+            $update = $conn->prepare('UPDATE users SET password = ? WHERE username = ?');
+            $update->bind_param('ss', $hash, $username);
+            $update->execute();
+            $update->close();
         }
 
         $sampleEvents = [

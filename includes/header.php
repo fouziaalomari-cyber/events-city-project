@@ -27,7 +27,9 @@ $activePage = $activePage ?? '';
                 <li class="nav-item"><a class="nav-link <?= $activePage === 'events' ? 'active' : '' ?>" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>events.php">الفعاليات</a></li>
                 <li class="nav-item"><a class="nav-link <?= $activePage === 'about' ? 'active' : '' ?>" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>about.php">عن الدليل</a></li>
                 <li class="nav-item"><a class="nav-link <?= $activePage === 'contact' ? 'active' : '' ?>" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>contact.php">اتصل بنا</a></li>
-                <?php if (!empty($_SESSION['admin_logged_in'])): ?>
+                <?php if (empty($_SESSION['admin_logged_in'])): ?>
+                    <li class="nav-item"><a class="nav-link" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>login.php">تسجيل الدخول</a></li>
+                <?php else: ?>
                     <li class="nav-item"><a class="nav-link" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>admin/dashboard.php">لوحة التحكم</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?= htmlspecialchars($basePath, ENT_QUOTES, 'UTF-8') ?>admin/logout.php">تسجيل الخروج</a></li>
                 <?php endif; ?>
