@@ -9,7 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 if (!empty($_SESSION['admin_logged_in'])) {
-    header('Location: admin/dashboard.php');
+    header('Location: index.php');
     exit;
 }
 
@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($user && password_verify(trim($_POST['password'] ?? ''), $user['password'])) {
         $_SESSION['admin_logged_in'] = true;
         $_SESSION['admin_username'] = $username;
-        header('Location: admin/dashboard.php');
+        header('Location: index.php');
         exit;
     }
 
